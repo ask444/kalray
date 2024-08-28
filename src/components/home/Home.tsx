@@ -43,7 +43,7 @@ import './Home.sass';
         3- Typescript usage: Define TypeScript interfaces whenever necessary. All functions and arguments should be typed.
 */
 
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { Todo, SortOptions, Pagination, ModalState } from '../../todoTypes';
 import appService from '../../services/appService';
 import { AppContext } from '../../context/AppContext';
@@ -57,6 +57,44 @@ const formatDate = (dateString: string | null) => {
     return date.toLocaleDateString();
 };
 
+// Modal Component
+const Modal: React.FC<{
+    isOpen: boolean;
+    content: string;
+    onClose: () => void;
+    onSave: (content: string) => void;
+    onUpdate: (content: string) => void;
+    isEditing: boolean;
+}> = ({ isOpen, content, onClose, onSave, onUpdate, isEditing }) => {
+    const [taskContent, setTaskContent] = useState(content);
+
+    useEffect(() => {
+        setTaskContent(content); // Set initial value when modal is opened
+    }, [content]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal">
+            <div className="modal-content">
+                <h2>{isEditing ? 'Edit Task' : 'Add Task'}</h2>
+                <input
+                    type="text"
+                    value={taskContent}
+                    onChange={(e) => setTaskContent(e.target.value)}
+                    placeholder="Task content"
+                />
+                <div className="modal-buttons">
+                    <button onClick={() => isEditing ? onUpdate(taskContent) : onSave(taskContent)}>
+                        {isEditing ? 'Update' : 'Save'}
+                    </button>
+                    <button onClick={onClose}>Close</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const Home: React.FC = () => {
     const { leftBarShown, onToggleLeftBarShown } = useContext(AppContext);
 
@@ -67,9 +105,11 @@ const Home: React.FC = () => {
     const [filter, setFilter] = useState<string>('');
     const [modalState, setModalState] = useState<ModalState>({ isOpen: false });
     const [loading, setLoading] = useState<boolean>(true);
-    const [isInfiniteScroll, setIsInfiniteScroll] = useState<boolean>(false); // State for scroll mode
+    const [modalContent, setModalContent] = useState<string>('');
+    const [currentTodo, setCurrentTodo] = useState<Todo | null>(null);
 
     const loaderRef = useRef<HTMLDivElement | null>(null);
+    const [infiniteScroll, setInfiniteScroll] = useState<boolean>(false);
 
     useEffect(() => {
         document.title = 'Tasks to do';
@@ -77,72 +117,54 @@ const Home: React.FC = () => {
         if (!leftBarShown) {
             onToggleLeftBarShown(true);
         }
-        // eslint-disable-next-line
     }, [leftBarShown, onToggleLeftBarShown]);
 
-    useEffect(() => {
-        const fetchTodos = async () => {
-            try {
-                const response = await appService.getToDoList();
-                setTodos(response.data);
-                setPagination(prev => ({ ...prev, totalPages: Math.ceil(response.data.length / 10) }));
+    const fetchTodos = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await appService.getToDoList();
+            setTodos(response.data);
+            setPagination(prev => ({ ...prev, totalPages: Math.ceil(response.data.length / 10) }));
+            if (infiniteScroll) {
+                // Infinite scroll handling
+                setDisplayedTodos(response.data.slice(0, 10));
+            } else {
+                // Pagination handling
                 setDisplayedTodos(response.data.slice(0, 10)); // Load initial data
-            } catch (error) {
-                console.error('Failed to fetch todos:', error);
-            } finally {
-                setLoading(false);
             }
-        };
-
-        fetchTodos();
-    }, []);
+        } catch (error) {
+            console.error('Failed to fetch todos:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [infiniteScroll]);
 
     useEffect(() => {
-        if (isInfiniteScroll) {
+        fetchTodos();
+    }, [fetchTodos]);
+
+    useEffect(() => {
+        const filtered = todos.filter(todo => todo.content.toLowerCase().includes(filter.toLowerCase()));
+        const start = (pagination.currentPage - 1) * 10;
+        const end = start + 10;
+        setDisplayedTodos(filtered.slice(start, end));
+        setPagination(prev => ({ ...prev, totalPages: Math.ceil(filtered.length / 10) }));
+    }, [filter, todos, pagination.currentPage]);
+
+    useEffect(() => {
+        if (infiniteScroll && loaderRef.current) {
             const handleScroll = () => {
                 if (loaderRef.current) {
                     const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
-                    if (scrollHeight - scrollTop <= clientHeight + 100) {
-                        fetchMoreTodos();
+                    if (scrollTop + clientHeight >= scrollHeight - 5) {
+                        handleLoadMore();
                     }
                 }
             };
-
             window.addEventListener('scroll', handleScroll);
             return () => window.removeEventListener('scroll', handleScroll);
         }
-    }, [isInfiniteScroll, displayedTodos]);
-
-    const fetchMoreTodos = () => {
-        if (!isInfiniteScroll) return;
-
-        setLoading(true);
-        const nextPage = Math.ceil(displayedTodos.length / 10) + 1;
-        if (nextPage <= pagination.totalPages) {
-            const start = (nextPage - 1) * 10;
-            const end = start + 10;
-            setDisplayedTodos(prev => [...prev, ...todos.slice(start, end)]);
-        }
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        if (!isInfiniteScroll) {
-            const start = (pagination.currentPage - 1) * 10;
-            const end = start + 10;
-            setDisplayedTodos(todos.slice(start, end));
-        }
-    }, [pagination.currentPage, todos, isInfiniteScroll]);
-
-    useEffect(() => {
-        if (!isInfiniteScroll) {
-            const filtered = todos.filter(todo => todo.content.toLowerCase().includes(filter.toLowerCase()));
-            setPagination(prev => ({ ...prev, totalPages: Math.ceil(filtered.length / 10) }));
-            const start = (pagination.currentPage - 1) * 10;
-            const end = start + 10;
-            setDisplayedTodos(filtered.slice(start, end));
-        }
-    }, [filter, todos, pagination.currentPage, isInfiniteScroll]);
+    }, [infiniteScroll, todos]);
 
     const handleSort = (field: keyof Todo) => {
         setSortOptions(prev => ({
@@ -167,7 +189,7 @@ const Home: React.FC = () => {
         setTodos(sorted);
     }, [sortOptions]);
 
-    const handleAddTask = async (content: string) => {
+    const handleAddTask = (content: string) => {
         const newTask: Todo = {
             id: Math.max(...todos.map(todo => todo.id), 0) + 1,
             content,
@@ -175,22 +197,29 @@ const Home: React.FC = () => {
             done_time: null,
         };
 
-        setTodos([...todos, newTask]);
-        setFilter(filter); // Trigger filtering to apply changes
+        // Simulate a service call
+        setTodos(prev => [...prev, newTask]);
+        setDisplayedTodos(prev => [...prev, newTask]);
         setModalState({ isOpen: false });
+        setCurrentTodo(null);
     };
 
-    const handleUpdateTask = async (updatedTodo: Todo) => {
-        const updatedTodos = todos.map(todo => todo.id === updatedTodo.id ? updatedTodo : todo);
-        setTodos(updatedTodos);
-        setFilter(filter); // Trigger filtering to apply changes
+    const handleUpdateTask = (updatedContent: string) => {
+        if (!currentTodo) return;
+
+        const updatedTodo = { ...currentTodo, content: updatedContent };
+
+        // Simulate a service call
+        setTodos(todos.map(todo => todo.id === updatedTodo.id ? updatedTodo : todo));
+        setDisplayedTodos(todos.map(todo => todo.id === updatedTodo.id ? updatedTodo : todo));
         setModalState({ isOpen: false });
+        setCurrentTodo(null);
     };
 
     const handleDeleteTask = (id: number) => {
-        const updatedTodos = todos.filter(todo => todo.id !== id);
-        setTodos(updatedTodos);
-        setFilter(filter); // Trigger filtering to apply changes
+        // Simulate a service call
+        setTodos(todos.filter(todo => todo.id !== id));
+        setDisplayedTodos(todos.filter(todo => todo.id !== id));
     };
 
     const handleMarkDone = (id: number) => {
@@ -198,7 +227,7 @@ const Home: React.FC = () => {
             todo.id === id ? { ...todo, done: true, done_time: new Date().toISOString() } : todo
         );
         setTodos(updatedTodos);
-        setFilter(filter); // Trigger filtering to apply changes
+        setDisplayedTodos(updatedTodos);
     };
 
     const handleMarkUndone = (id: number) => {
@@ -206,7 +235,7 @@ const Home: React.FC = () => {
             todo.id === id ? { ...todo, done: false, done_time: null } : todo
         );
         setTodos(updatedTodos);
-        setFilter(filter); // Trigger filtering to apply changes
+        setDisplayedTodos(updatedTodos);
     };
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,14 +248,30 @@ const Home: React.FC = () => {
     };
 
     const handleToggleModal = (todo?: Todo) => {
-        setModalState({ isOpen: !modalState.isOpen, todo });
+        if (todo) {
+            setModalContent(todo.content);
+            setCurrentTodo(todo);
+            setModalState({ isOpen: true });
+        } else {
+            setModalContent('');
+            setCurrentTodo(null);
+            setModalState({ isOpen: true });
+        }
     };
 
-    const handleToggleMode = () => {
-        setIsInfiniteScroll(prev => !prev);
-        if (!isInfiniteScroll) {
-            setPagination({ currentPage: 1, totalPages: 1 });
-            setDisplayedTodos(todos.slice(0, 10));
+    const handleSaveTask = (content: string) => {
+        if (currentTodo) {
+            handleUpdateTask(content);
+        } else {
+            handleAddTask(content);
+        }
+    };
+
+    const handleLoadMore = () => {
+        if (pagination.currentPage < pagination.totalPages) {
+            const nextPage = pagination.currentPage + 1;
+            setPagination(prev => ({ ...prev, currentPage: nextPage }));
+            setDisplayedTodos(todos.slice(0, nextPage * 10));
         }
     };
 
@@ -244,9 +289,8 @@ const Home: React.FC = () => {
                     />
 
                     <button onClick={() => handleToggleModal()}>Add Task</button>
-
-                    <button onClick={handleToggleMode}>
-                        {isInfiniteScroll ? 'Switch to Pagination' : 'Switch to Infinite Scroll'}
+                    <button onClick={() => setInfiniteScroll(prev => !prev)}>
+                        Toggle {infiniteScroll ? 'Pagination' : 'Infinite Scroll'}
                     </button>
 
                     <table className="todo-table">
@@ -262,19 +306,23 @@ const Home: React.FC = () => {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="loader">Loading...</td>
+                                    <td colSpan={5}>Loading...</td>
+                                </tr>
+                            ) : displayedTodos.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5}>No tasks found</td>
                                 </tr>
                             ) : (
                                 displayedTodos.map(todo => (
-                                    <tr key={todo.id} className={todo.done ? 'strikethrough' : ''}>
+                                    <tr key={todo.id} style={{ textDecoration: todo.done ? 'line-through' : 'none' }}>
                                         <td>{todo.id}</td>
                                         <td>{todo.content}</td>
                                         <td>{todo.done ? 'Yes' : 'No'}</td>
                                         <td>{formatDate(todo.done_time)}</td>
                                         <td>
-                                            <button onClick={() => handleMarkDone(todo.id)}>Mark Done</button>
-                                            <button onClick={() => handleMarkUndone(todo.id)}>Mark Undone</button>
-                                            <button onClick={() => handleUpdateTask(todo)}>Edit</button>
+                                            <button onClick={() => handleToggleModal(todo)}>Edit</button>
+                                            <button onClick={() => handleMarkDone(todo.id)} disabled={todo.done}>Mark Done</button>
+                                            <button onClick={() => handleMarkUndone(todo.id)} disabled={!todo.done}>Mark Undone</button>
                                             <button onClick={() => handleDeleteTask(todo.id)}>Delete</button>
                                         </td>
                                     </tr>
@@ -283,20 +331,38 @@ const Home: React.FC = () => {
                         </tbody>
                     </table>
 
-                    {!isInfiniteScroll && (
+                    {!infiniteScroll && (
                         <div className="pagination">
-                            <button disabled={pagination.currentPage === 1} onClick={() => handlePageChange(pagination.currentPage - 1)}>Previous</button>
-                            <span>Page {pagination.currentPage} of {pagination.totalPages}</span>
-                            <button disabled={pagination.currentPage === pagination.totalPages} onClick={() => handlePageChange(pagination.currentPage + 1)}>Next</button>
+                            <button
+                                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                disabled={pagination.currentPage === 1}
+                            >
+                                Previous
+                            </button>
+                            <span>{pagination.currentPage} of {pagination.totalPages}</span>
+                            <button
+                                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                disabled={pagination.currentPage === pagination.totalPages}
+                            >
+                                Next
+                            </button>
                         </div>
                     )}
 
-                    {isInfiniteScroll && <div ref={loaderRef} className="loader">Loading more...</div>}
+                    {infiniteScroll && <div ref={loaderRef} style={{ height: '20px', background: '#f0f0f0' }}></div>}
                 </div>
+
+                <Modal
+                    isOpen={modalState.isOpen}
+                    content={modalContent}
+                    onClose={() => setModalState({ isOpen: false })}
+                    onSave={handleSaveTask}
+                    onUpdate={handleUpdateTask}
+                    isEditing={!!currentTodo}
+                />
             </div>
         </div>
     );
 };
 
 export default Home;
-
