@@ -1,0 +1,3 @@
+COPYRIGHT Kalray Inc.
+
+This test content cannot be shared to any 3rd party except where express permission is provided in writing by Kalray Inc.

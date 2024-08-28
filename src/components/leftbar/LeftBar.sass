@@ -1,0 +1,53 @@
+@import '../../variables'
+
+.left-bar
+  align-items: center
+  display: flex
+  flex-direction: column
+  justify-content: space-between
+  padding: $left-bar-padding-width
+
+  &.min
+    width: $left-bar-shrinked-width
+
+  &.exp
+    width: $left-bar-expanded-width
+
+.left-bar-menu
+  background-color: $white
+  position: fixed
+  top: $topbar-height
+  height: calc(100vh - $topbar-height)
+  border-right: $left-bar-border-width solid $base-gray-200
+
+.left-bar-logo
+  background-color: $pixit-primary-dark-green-2
+  position: fixed
+  height: $topbar-height
+  border-right: $left-bar-border-width solid $pixit-primary-dark-green-1
+
+.left-bar-menu-items
+  align-items: center
+  display: flex
+  flex-direction: column
+  gap: 24px
+  justify-content: center
+  position: relative
+  width: fit-content
+
+.left-bar-hub-version
+  color: $gray-400
+  font-size: $font-size-m
+  font-style: normal
+  font-weight: $font-weight-regular
+
+.left-bar-logo-container
+  display: flex
+  justify-content: center
+  align-items: center
+  height: 40px
+  width: $left-bar-shrinked-width - 20px
+  margin-top: -10px
+
+  & img
+    max-width: $left-bar-shrinked-width

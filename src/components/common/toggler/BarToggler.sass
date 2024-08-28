@@ -1,0 +1,88 @@
+@import '../../../variables'
+
+
+.bar-toggler
+  align-items: center
+  display: flex
+  height: 40px
+  justify-content: center
+  width: 40px
+  cursor: pointer
+
+  &.point-right
+    & .bar-toggler-content
+        transform: none
+
+  &.point-left
+    & .bar-toggler-content
+        transform: rotate(180deg)
+  
+  &.point-top
+    & .bar-toggler-content
+        transform: rotate(270deg)
+  
+  &.point-bottom
+    & .bar-toggler-content
+        transform: rotate(90deg)
+
+
+
+.bar-toggler-content
+  height: 24px
+  min-width: 24px
+
+  align-items: center
+  display: flex
+  justify-content: center
+  
+
+.bar-toggler-icon-group
+  height: 19px
+  position: relative
+  width: 19px
+
+.bar-toggler-outer-icon
+  height: 19px
+  left: 0
+  position: absolute
+  top: 0
+  width: 19px
+
+  & .svg-stroke
+    width: 100%
+    height: 100%
+    
+    & path
+      stroke: $gray-800
+  
+  & .svg-fill
+    width: 100%
+    height: 100%
+    
+    & path
+      fill: $gray-800
+
+.bar-toggler-icon
+  height: 8px
+  left: 3px
+  position: absolute
+  top: 6px
+  width: 8px
+
+  display: flex
+  align-items: center
+  justify-content: center
+
+  & .svg-stroke
+    width: 100%
+    height: 100%
+    
+    & path
+      stroke: $gray-800
+  
+  & .svg-fill
+    width: 100%
+    height: 100%
+    
+    & path
+      fill: $gray-800

@@ -1,0 +1,30 @@
+@import '../../variables'
+
+
+.app
+    width: 100%
+    height: 100%
+    overflow: auto
+    display: flex
+    background-color: $gray-25
+
+.page
+    background-color: transparent
+
+.page-shrinked
+    width: calc(100vw - $left-bar-expanded-width)
+    margin-left: $left-bar-expanded-width
+    overflow-x: clip
+
+.page-expanded
+    width: calc(100vw - $left-bar-shrinked-width)
+    margin-left: $left-bar-shrinked-width
+    overflow-x: clip
+
+.page-full
+    width: 100vw
+    margin-left: 0
+    overflow-x: clip
+
+.pagecontent
+    max-width: 100%

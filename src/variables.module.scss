@@ -1,0 +1,55 @@
+@import './variables';
+
+// this is for exporting color definitions to JS code
+:export {
+    chart-tooltip-text-color: $gray-700;
+    chart-tooltip-bg-color: $gray-50;
+
+    job-task-color-success: $job-task-color-success;
+    job-task-color-success-brighter: $job-task-color-success-brighter;
+    job-task-color-started: $job-task-color-started;
+    job-task-color-started-brighter: $job-task-color-started-brighter;
+    job-task-color-pending: $job-task-color-pending;
+    job-task-color-pending-brighter: $job-task-color-pending-brighter;
+    job-task-color-skipped: $job-task-color-skipped;
+    job-task-color-skipped-brighter: $job-task-color-skipped-brighter;
+    job-task-color-aborted: $job-task-color-aborted;
+    job-task-color-aborted-brighter: $job-task-color-aborted-brighter;
+    job-task-color-cancelled: $job-task-color-cancelled;
+    job-task-color-cancelled-brighter: $job-task-color-cancelled-brighter;
+    job-task-color-failure: $job-task-color-failure;
+    job-task-color-failure-brighter: $job-task-color-failure-brighter;
+    job-task-color-unknown: $job-task-color-unknown;
+    job-task-color-unknown-brighter: $job-task-color-unknown-brighter;
+
+    job-file-color-processed: $job-file-color-processed;
+    job-file-color-processed-brighter: $job-file-color-processed-brighter;
+    job-file-color-inprogress: $job-file-color-inprogress;
+    job-file-color-inprogress-brighter: $job-file-color-inprogress-brighter;
+    job-file-color-pending: $job-file-color-pending;
+    job-file-color-pending-brighter: $job-file-color-pending-brighter;
+    job-file-color-skipped: $job-file-color-skipped;
+    job-file-color-skipped-brighter: $job-file-color-skipped-brighter;
+    job-file-color-aborted: $job-file-color-aborted;
+    job-file-color-aborted-brighter: $job-file-color-aborted-brighter;
+    job-file-color-cancelled: $job-file-color-cancelled;
+    job-file-color-cancelled-brighter: $job-file-color-cancelled-brighter;
+    job-file-color-failed: $job-file-color-failed;
+    job-file-color-failed-brighter: $job-file-color-failed-brighter;
+    job-file-color-unknown: $job-file-color-unknown;
+    job-file-color-unknown-brighter: $job-file-color-unknown-brighter;
+
+    pool-1-bg-color: $pool-1-bg-color;
+    pool-2-bg-color: $pool-2-bg-color;
+    pool-3-bg-color: $pool-3-bg-color;
+    pool-4-bg-color: $pool-4-bg-color;
+    pool-5-bg-color: $pool-5-bg-color;
+    pool-6-bg-color: $pool-6-bg-color;
+    pool-7-bg-color: $pool-7-bg-color;
+    pool-8-bg-color: $pool-8-bg-color;
+
+    breakpoint-sm: $screen-small;
+    breakpoint-md: $screen-medium;
+    breakpoint-lg: $screen-large;
+    breakpoint-xl: $screen-extra-large;
+}
